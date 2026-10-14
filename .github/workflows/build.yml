@@ -1,0 +1,40 @@
+name: Build Calculator APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Generate Android Project & Inject Code
+        run: |
+          cp main.dart /tmp/main.dart
+          flutter create --project-name calculator_app --org com.calc.app --platforms android .
+          cp /tmp/main.dart lib/main.dart
+
+      - name: Build Release APK
+        run: flutter build apk --release --split-per-abi
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Calculator-APK-Release
+          path: build/app/outputs/flutter-apk/*.apk
